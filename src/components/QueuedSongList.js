@@ -13,6 +13,7 @@ import {
 
 function QueuedSongList() {
     const greaterThanMd = useMediaQuery(theme => theme.breakpoints.up('md'));
+
     const song = {
         title: "LUNE",
         artist: "MOON",
@@ -30,7 +31,6 @@ function QueuedSongList() {
         </div>
     )
 }
-
 
 const useStyles = makeStyles({
     avatar: {

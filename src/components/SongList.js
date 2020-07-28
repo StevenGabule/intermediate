@@ -11,15 +11,13 @@ import {
 } from '@material-ui/core';
 
 import {PlayArrow, Save} from '@material-ui/icons';
+import {useSubscription} from '@apollo/client';
+import {GET_SONGS} from "../graphql/subscriptions";
+
+
 
 function SongList() {
-    let loading = false;
-
-    const song = {
-        title: "LUNE",
-        artist: "MOON",
-        thumbnail: "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.ytimg.com%2Fvi%2FWMen_MMUs54%2Fmaxresdefault.jpg&f=1&nofb=1"
-    }
+    const {data, loading, error} = useSubscription(GET_SONGS);
 
     if (loading) {
         return (
@@ -34,9 +32,11 @@ function SongList() {
         );
     }
 
+    if (error) return <div>Error fetching songs.</div>
+
     return (
         <div>
-            {Array.from({ length: 10}, () => song).map((song, i) => (
+            {data.songs.map((song, i) => (
                  <Song key={i} song={song} />
             ))}
         </div>
