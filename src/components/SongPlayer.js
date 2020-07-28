@@ -13,8 +13,13 @@ import {
 import {
     SkipPrevious,
     SkipNext,
+    Pause,
     PlayArrow
 } from '@material-ui/icons'
+
+import { SongContext } from '../App';
+import { GET_QUEUED_SONGS } from '../graphql/queries';
+import { useQuery } from '@apollo/client';
 
 const useStyles = makeStyles(theme => ({
     container: {
@@ -44,40 +49,51 @@ const useStyles = makeStyles(theme => ({
     }
 }))
 
+
+
 function SongPlayer() {
     const classes = useStyles();
+    const { data = [] } = useQuery(GET_QUEUED_SONGS);
+    const {state, dispatch} = React.useContext(SongContext);
+
+    function handleTogglePlay() {
+        dispatch(state.isPlaying ? { type: 'PAUSE_SONG'} :  { type: 'PLAY_SONG'});
+    }
+
     return (
-        <>
-        <Card variant="outlined" className={classes.container}>
-            <div className={classes.details}>
-               <CardContent className={classes.content}>
-                   <Typography variant="h5" component="h3">
-                       Title
-                   </Typography>
-                   <Typography variant="subtitle1" component="p" color="textSecondary">
-                       Artist
-                   </Typography>
-               </CardContent>
-                <div className={classes.controls}>
-                    <IconButton>
-                        <SkipPrevious />
-                    </IconButton>
-                    <IconButton>
-                        <PlayArrow className={classes.playIcon} />
-                    </IconButton>
-                    <IconButton>
-                        <SkipNext />
-                    </IconButton>
-                    <Typography variant="subtitle1" component="p" color="textSecondary">
-                       00:01:30
-                   </Typography>
+        <React.Fragment>
+            <Card variant="outlined" className={classes.container}>
+                <div className={classes.details}>
+                   <CardContent className={classes.content}>
+                       <Typography variant="h5" component="h3">
+                           {state.song.title}
+                       </Typography>
+                       <Typography variant="subtitle1" component="p" color="textSecondary">
+                           {state.song.artist}
+                       </Typography>
+                   </CardContent>
+                    <div className={classes.controls}>
+                        <IconButton>
+                            <SkipPrevious />
+                        </IconButton>
+                        <IconButton onClick={handleTogglePlay}>
+                            {state.isPlaying ? <Pause className={classes.playIcon} /> : <PlayArrow className={classes.playIcon} />}
+                        </IconButton>
+                        <IconButton>
+                            <SkipNext />
+                        </IconButton>
+                        <Typography variant="subtitle1" component="p" color="textSecondary">
+                           00:01:30
+                       </Typography>
+                    </div>
+                    <Slider type="range" min={0} max={1} step={0.01} />
                 </div>
-                <Slider type="range" min={0} max={1} step={0.01} />
-            </div>
-            <CardMedia className={classes.thumbnail} image="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.ytimg.com%2Fvi%2FWMen_MMUs54%2Fmaxresdefault.jpg&f=1&nofb=1" />
-        </Card>
-        <QueuedSongList />
-        </>
+                <CardMedia
+                    className={classes.thumbnail}
+                    image={state.song.thumbnail} />
+            </Card>
+            <QueuedSongList queue={data.queue} />
+        </React.Fragment>
     )
 }
 

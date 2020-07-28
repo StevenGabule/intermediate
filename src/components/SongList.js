@@ -10,11 +10,11 @@ import {
     makeStyles
 } from '@material-ui/core';
 
-import {PlayArrow, Save} from '@material-ui/icons';
-import {useSubscription} from '@apollo/client';
+import {PlayArrow, Save, Pause} from '@material-ui/icons';
+import {useMutation, useSubscription} from '@apollo/client';
 import {GET_SONGS} from "../graphql/subscriptions";
-
-
+import {SongContext} from '../App';
+import {ADD_OR_REMOVE_FROM_QUEUE} from "../graphql/mutations";
 
 function SongList() {
     const {data, loading, error} = useSubscription(GET_SONGS);
@@ -27,7 +27,7 @@ function SongList() {
                 alignItems: 'center',
                 marginTop: 50
             }}>
-               <CircularProgress />
+                <CircularProgress/>
             </div>
         );
     }
@@ -37,7 +37,7 @@ function SongList() {
     return (
         <div>
             {data.songs.map((song, i) => (
-                 <Song key={i} song={song} />
+                <Song key={i} song={song}/>
             ))}
         </div>
     );
@@ -65,31 +65,52 @@ const useStyles = makeStyles(theme => ({
 }));
 
 function Song({song}) {
-    const {thumbnail, artist, title} = song;
+    const {id, thumbnail, artist, title} = song;
     const classes = useStyles();
+    const [addOrRemoveFromQueue] = useMutation(ADD_OR_REMOVE_FROM_QUEUE);
+    const {state, dispatch} = React.useContext(SongContext);
+    const [currentSongPlaying, setCurrentSongPlaying] = React.useState(false);
+
+    React.useEffect(() => {
+        const isSongPlaying = state.isPlaying && id === state.song.id;
+        setCurrentSongPlaying(isSongPlaying);
+    }, [id, state.song.id, state.isPlaying]);
+
+    function handleTogglePlay() {
+        dispatch({type: "SET_SONG", payload: {song}});
+        dispatch(state.isPlaying ? {type: 'PAUSE_SONG'} : {type: 'PLAY_SONG'});
+    }
+
+    function handleAddOrRemoveFromQueue() {
+        addOrRemoveFromQueue({
+            variables: {input: {...song, __typename: 'Song'}}
+        }).then(r => console.log(r))
+    }
+
+
     return (
         <Card className={classes.container}>
             <div className={classes.songInfoContainer}>
                 <CardMedia
-                className={classes.thumbnail}
-                image={thumbnail} />
+                    className={classes.thumbnail}
+                    image={thumbnail}/>
                 <div className={classes.songInfo}>
                     <CardContent>
-                    <Typography gutterBottom variant="h5" component="h2">
-                        {title}
-                    </Typography>
-                    <Typography variant="body1" component="p" color="textSecondary">
-                        {artist}
-                    </Typography>
-                </CardContent>
-                <CardActions>
-                    <IconButton size="small" color="primary">
-                        <PlayArrow />
-                    </IconButton>
-                    <IconButton size="small" color="secondary">
-                        <Save />
-                    </IconButton>
-                </CardActions>
+                        <Typography gutterBottom variant="h5" component="h2">
+                            {title}
+                        </Typography>
+                        <Typography variant="body1" component="p" color="textSecondary">
+                            {artist}
+                        </Typography>
+                    </CardContent>
+                    <CardActions>
+                        <IconButton onClick={handleTogglePlay} size="small" color="primary">
+                            {currentSongPlaying ? <Pause/> : <PlayArrow/>}
+                        </IconButton>
+                        <IconButton onClick={handleAddOrRemoveFromQueue} size="small" color="secondary">
+                            <Save/>
+                        </IconButton>
+                    </CardActions>
                 </div>
             </div>
         </Card>
